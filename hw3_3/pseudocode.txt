@@ -2,21 +2,19 @@ ROUND BASED PAILLIER ENCRYPTION WITH FAIRPLAY
 
 OVERVIEW
 
-The main idea of this encryption protocol is to decentralize computation and acess to information as much as possible by splitting the Paillier encryption system (together with the Fairplay) 
-into ROUNDS
-each ROUND would be made between pairs of people where would provide a public key and the other would do the computation on their pre accorded , 
-they would then determine their local maximums, and the local winner would send to the accordingly to the other local pair, to decide on the final maximum. 
-In total, there will be 4 rounds per participants envolved
+The main idea of this encryption protocol is to decentralize computation and minimize access to information through the combination of Paillier encryption and Fairplay communication. The computation is divided into ROUNDS, where each user will execute a ROUND simultaneously. 
+
+A ROUND for user X will consist of GATHERing an encrpyted slice of each user's vector (including self) and computing the sums for each of their assigned vector indices. X will share the encrypted sums with the person whose public key was used to encrypt the data. Then X will receive encrypted sums from a different user. X will decrypt that data they received and identify the maximum value. X will proceed to initiate a Fairplay comparison with another user to compare their maximum with that of the other user. If X has larger max_sum then X will initiate another Fairplay comparison with the winner from another pair of ROUNDs (which is happening in parallel); else they will wait to receive the result from another user.
 
 ================================================================================
 
 
-Round(i, key)
+Gather(i, Person)
     // Receive encrypted value of vector[i] from each party, including self
-    c_a = query Alice for encrypt(Alice[i], key)                    // encrypted with Person.public_key
-    c_b = query Bob for encrypt(Bob[i], key)                        // encrypted with Person.public_key
-    c_c = query Chris for encrypt(Chris[i], key)                encrypted with Person.public_key
-    c_d = query David for David[i]                                  //encrypted with Person.public_key
+    c_a = query Alice for encrypt(Alice[i], Person.public_key)                    // encrypted with Person's public_key
+    c_b = query Bob for encrypt(Bob[i], Person.public_key)                        
+    c_c = query Chris for encrypt(Chris[i], Person.public_key)                    
+    c_d = query David for encrypt(David[i], Person.public_key) 
     return c_sum_i = c_a * c_b * c_c * c_d
 
 
@@ -24,9 +22,9 @@ Alice()
     public_key, secret_key = generate_keys()
 
     // ciphertext of sum_0, encrypted with Bob's public key
-    c_sum_0 = Round(0, Bob_pk)
+    c_sum_0 = Gather(0, Bob)
     // ciphertext of sum_1, encrypted with Bob's public key
-    c_sum_1 = Round(1, Bob)
+    c_sum_1 = Gather(1, Bob)
 
     // Alice shares the encrypted sums with Bob
     share(Bob, c_sum_0, c_sum_1)
@@ -74,9 +72,9 @@ Alice()
 
 Bob()
     // ciphertext of sum_2, encrypted with Alice's public key
-    c_sum_2 = Round(2, Alice)
+    c_sum_2 = Gather(2, Alice)
     // ciphertext of sum_3, encrypted with Alice's public key
-    c_sum_3 = Round(3, Alice)
+    c_sum_3 = Gather(3, Alice)
 
     // Bob shares the encrypted sums with Alice
     share(Alice, c_sum_2, c_sum_3)
@@ -126,11 +124,11 @@ Chris()
     public_key, secret_key = generate_keys()
 
     // ciphertext of sum_4, encrypted with David's public key
-    c_sum_4 = Round(0, David)
+    c_sum_4 = Gather(0, David)
     // ciphertext of sum_5, encrypted with David's public key
-    c_sum_5 = Round(1, David)
+    c_sum_5 = Gather(1, David)
     // ciphertext of sum_6, encrypted with David's public key
-    c_sum_6 = Round(1, David)
+    c_sum_6 = Gather(1, David)
 
     // Chris shares the encrypted sums with David
     share(David, c_sum_4, c_sum_5, c_sum_6)
@@ -181,11 +179,11 @@ David()
     public_key, secret_key = generate_keys()
 
     // ciphertext of sum_7, encrypted with Chris's public key
-    c_sum_7 = Round(0, Chris)
+    c_sum_7 = Gather(0, Chris)
     // ciphertext of sum_8, encrypted with Chris's public key
-    c_sum_8 = Round(1, Chris)
+    c_sum_8 = Gather(1, Chris)
     // ciphertext of sum_9, encrypted with Chris's public key
-    c_sum_9 = Round(1, Chris)
+    c_sum_9 = Gather(1, Chris)
 
 
     // David shares the encrypted sums with Chris
