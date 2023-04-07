@@ -1,0 +1,233 @@
+ROUND BASED PAILLIER ENCRYPTION WITH FAIRPLAY
+
+OVERVIEW
+
+The main idea of this encryption protocol is to decentralize computation and acess to information as much as possible by splitting the Paillier encryption system (together with the Fairplay) 
+into ROUNDS
+each ROUND would be made between pairs of people where would provide a public key and the other would do the computation on their pre accorded , 
+they would then determine their local maximums, and the local winner would send to the accordingly to the other local pair, to decide on the final maximum. 
+In total, there will be 4 rounds per participants envolved
+
+================================================================================
+
+
+Round(i, key)
+    // Receive encrypted value of vector[i] from each party, including self
+    c_a = query Alice for encrypt(Alice[i], key)                    // encrypted with Person.public_key
+    c_b = query Bob for encrypt(Bob[i], key)                        // encrypted with Person.public_key
+    c_c = query Chris for encrypt(Chris[i], key)                encrypted with Person.public_key
+    c_d = query David for David[i]                                  //encrypted with Person.public_key
+    return c_sum_i = c_a * c_b * c_c * c_d
+
+
+Alice()
+    public_key, secret_key = generate_keys()
+
+    // ciphertext of sum_0, encrypted with Bob's public key
+    c_sum_0 = Round(0, Bob_pk)
+    // ciphertext of sum_1, encrypted with Bob's public key
+    c_sum_1 = Round(1, Bob)
+
+    // Alice shares the encrypted sums with Bob
+    share(Bob, c_sum_0, c_sum_1)
+
+    // Alice recieves the encrypted sums computed by Bob // Alice has to wait for Bob to call share()
+    c_sum_2, c_sum_3 = query Bob for c_sum_2 and c_sum_3
+
+    // Alice decrypts the ciphertexts she receives from Bob
+    sum_2 = decrypt(c_sum_2, public_key)
+    sum_3 = decrypt(c_sum_3, public_key)
+
+    max_sum = maximum(sum_2, sum_3)
+
+    // Alice uses Billionaires.txt Fairplay program to jointly compute whether she or Bob has a larger value
+    mine_is_greater = Fairplay(Billionaires.txt, max_sum, Bob)
+
+    if mine_is_greater:
+        // Inform Chris and David that Alice had larger max_sum than Bob
+        share(Chris, True)
+        share(David, True)
+        
+        chris_max = query Chris for whether or not he had larger max_val among himself and David
+        david_max = query David "                                                        " Chris
+        
+        if david_max: person = David
+        else: person = Chris
+        
+        mine_is_greater = Fairplay(Billionaires.txt, max_sum, person)
+        
+        if mine_is_greater:
+            share(Bob, max_sum)
+            share(Chris, max_sum)
+            share(David, max_sum)
+            // max_sum was the greatest among all people
+            return max_sum
+        else:
+            final_result = query person for final maximum
+    else:
+        share(Chris, False)
+        share(David, False)
+        final_result = query Bob, Chris, and David for final maximum
+        
+    return final_result
+
+
+Bob()
+    // ciphertext of sum_2, encrypted with Alice's public key
+    c_sum_2 = Round(2, Alice)
+    // ciphertext of sum_3, encrypted with Alice's public key
+    c_sum_3 = Round(3, Alice)
+
+    // Bob shares the encrypted sums with Alice
+    share(Alice, c_sum_2, c_sum_3)
+
+    // Bob recieves the encrypted sums computed by Bob
+    receive_sums(Bob, c_sum_0, c_sum_1)
+
+    // Bob decrypts the ciphertexts he receives from Alice
+    sum_0 = decrypt(c_sum_0, public_key)
+    sum_1 = decrypt(c_sum_1, public_key)
+
+    max_sum = maximum(sum_0, sum_1)
+
+    // Bob uses Billionaires.txt Fairplay program to jointly compute whether she or Alice has a larger value
+    mine_is_greater = Fairplay(Billionaires.txt, max_sum, Alice)
+
+    if mine_is_greater:
+        // Inform Chris and David that Bob had larger max_sum than Alice
+        share(Chris, True)
+        share(David, True)
+        
+        chris_max = query Chris for whether or not he had larger max_val among himself and David
+        david_max = query David "                                                        " Chris
+        
+        if david_max: person = David
+        else: person = Chris
+        
+        mine_is_greater = Fairplay(Billionaires.txt, max_sum, person)
+        
+        if mine_is_greater:
+            share(Alice, max_sum)
+            share(Chris, max_sum)
+            share(David, max_sum)
+            // max_sum was the greatest among all people
+            return max_sum
+        else:
+            final_result = query person for final maximum
+    else:
+        share(Chris, False)
+        share(David, False)
+        final_result = query Alice, Chris, and David for final maximum
+        
+    return final_result
+    
+
+Chris()
+    public_key, secret_key = generate_keys()
+
+    // ciphertext of sum_4, encrypted with David's public key
+    c_sum_4 = Round(0, David)
+    // ciphertext of sum_5, encrypted with David's public key
+    c_sum_5 = Round(1, David)
+    // ciphertext of sum_6, encrypted with David's public key
+    c_sum_6 = Round(1, David)
+
+    // Chris shares the encrypted sums with David
+    share(David, c_sum_4, c_sum_5, c_sum_6)
+
+    // Chris recieves the encrypted sums computed by David // Chris has to wait for David to call share()
+    c_sum_7, c_sum_8, c_sum_9 = query David for c_sum_7, c_sum_8, c_sum_9
+
+    // Chris decrypts the ciphertexts he receives from David
+    sum_7 = decrypt(c_sum_7, public_key)
+    sum_8 = decrypt(c_sum_8, public_key)
+    sum_9 = decrypt(c_sum_9, public_key)
+
+    max_sum = maximum(sum_7, sum_8, sum_9)
+
+    // Chris uses Billionaires.txt Fairplay program to jointly compute whether he or David has a larger value
+    mine_is_greater = Fairplay(Billionaires.txt, max_sum, David)
+
+    if mine_is_greater:
+        // Inform Alice and Bob that Chris had larger max_sum than David
+        share(Alice, True)
+        share(Bob, True)
+        
+        alice_max = query Alice for whether or not she had larger max_val among herself and Bob
+        bob_max = query Bob "                                                             " Alice
+        
+        if bob_max: person = Bob
+        else: person = Alice
+        
+        mine_is_greater = Fairplay(Billionaires.txt, max_sum, person)
+        
+        if mine_is_greater:
+            share(Alice, max_sum)
+            share(Bob, max_sum)
+            share(David, max_sum)
+            // max_sum was the greatest among all people
+            return max_sum
+        else:
+            final_result = query person for final maximum
+    else:
+        share(Alice, False)
+        share(Bob, False)
+        final_result = query Alice, Bob, and David for final maximum
+        
+    return final_result
+
+
+David()
+    public_key, secret_key = generate_keys()
+
+    // ciphertext of sum_7, encrypted with Chris's public key
+    c_sum_7 = Round(0, Chris)
+    // ciphertext of sum_8, encrypted with Chris's public key
+    c_sum_8 = Round(1, Chris)
+    // ciphertext of sum_9, encrypted with Chris's public key
+    c_sum_9 = Round(1, Chris)
+
+
+    // David shares the encrypted sums with Chris
+    share(Chris, c_sum_7, c_sum_8, c_sum_9)
+
+    // David recieves the encrypted sums computed by Chris // David has to wait for Chris to call share()
+    c_sum_4, c_sum_5, c_sum_6 = query Chris for c_sum_4, c_sum_5, c_sum_6
+
+    // David decrypts the ciphertexts he receives from Chris
+    sum_4 = decrypt(c_sum_4, public_key)
+    sum_5 = decrypt(c_sum_5, public_key)
+    sum_6 = decrypt(c_sum_6, public_key)
+
+    max_sum = maximum(sum_4, sum_5, sum_6)
+
+    // David uses Billionaires.txt Fairplay program to jointly compute whether he or Chris has a larger value
+    mine_is_greater = Fairplay(Billionaires.txt, max_sum, Chris)
+
+    if mine_is_greater:
+        // Inform Alice and Bob that David had larger max_sum than Chris
+        share(Alice, True)
+        share(Bob, True)
+        
+        alice_max = query Alice for whether or not she had larger max_val among herself and Bob
+        bob_max = query Bob "                                                             " Alice
+        
+        if bob_max: person = Bob
+        else: person = Alice
+        
+        mine_is_greater = Fairplay(Billionaires.txt, max_sum, person)
+        
+        if mine_is_greater:
+            share(Alice, max_sum)
+            share(Bob, max_sum)
+            share(Chris, max_sum)
+            // max_sum was the greatest among all people
+            return max_sum
+        else:
+            final_result = query person for final maximum
+    else:
+        share(Alice, False)
+        share(Bob, False)
+        final_result = query Alice, Bob, and Chris for final maximum
+        
+    return final_result
